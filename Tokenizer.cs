@@ -7,12 +7,13 @@ namespace TestTask
     class Tokenizer
     {
         private List<List<StringVariant>> listListOfStringVariants;
-        
-        private const int VAR_MAX = 4; // Пусть количество вложенных списков будет от 1 до 4.
+        private const int VAR_MAX = 4;    // Пусть количество вложенных списков будет от 1 до 4.
+        private ListCounter listCounter;  // Класс, который поможет в обходе наших списков.
 
         public Tokenizer(int upperListSize)
         {
             this.listListOfStringVariants = generateListListStringVariant(upperListSize);
+            listCounter = new ListCounter(this.listListOfStringVariants);
         }
 
         private List<List<StringVariant>> generateListListStringVariant(int upperListSize)
@@ -74,38 +75,33 @@ namespace TestTask
         {
             List<StringVariant> resultList = new List<StringVariant>();
 
-            for (int i = 0; i < listListOfStringVariants.Count; i++)
+            // С помощью нашего класса - счетчика счетчиков списков, "собираем" нужную строку.
+            while(true)
             {
-                for(int j = 0; j < listListOfStringVariants[i].Count; j++)
+                String resultString = "";
+                double resultWeight = 1.00;
+                for (int i = 0; i < listListOfStringVariants.Count; i++)
                 {
-                    for(int k = i + 1; k < listListOfStringVariants.Count; k++)
+                    resultString += listListOfStringVariants[i][listCounter.counters[i][0]].getValue();
+                    double curWeightNotNull = defaultWeight;
+                    double? curWeight = listListOfStringVariants[i][listCounter.counters[i][0]].getWeight();
+         
+                    if (curWeight != null)
                     {
-                        for(int l = 0; l < listListOfStringVariants[k].Count; l++)
-                        {
-                            String resultString = listListOfStringVariants[i][j].getValue() + listListOfStringVariants[k][l].getValue();
-
-                            double? leftWeight = listListOfStringVariants[i][j].getWeight();
-                            double? rightWeight = listListOfStringVariants[k][l].getWeight();
-                            double leftMultiplier = defaultWeight;
-                            double rightMultiplier = defaultWeight;
-
-                            if (leftWeight != null)
-                            {
-                                leftMultiplier = leftWeight.Value;
-                            }
-
-                            if (rightWeight != null)
-                            {
-                                rightMultiplier = rightWeight.Value;
-                            }
-
-                            double resultWeight = Math.Round(leftMultiplier * rightMultiplier, 2);
-
-                            StringVariant sv = new StringVariant(resultString, resultWeight);
-                            resultList.Add(sv);
-                        }
+                        curWeightNotNull = curWeight.Value;
                     }
+                    resultWeight *= curWeightNotNull;
+
                 }
+                resultWeight = Math.Round(resultWeight, 2);
+                StringVariant sv = new StringVariant(resultString, resultWeight);
+                resultList.Add(sv);
+
+                if (!listCounter.iterate())
+                {
+                    break;
+                }
+
             }
 
             return resultList;
